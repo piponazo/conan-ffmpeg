@@ -1,54 +1,58 @@
-from conans import ConanFile, ConfigureEnvironment, tools
+from conans import ConanFile, AutoToolsBuildEnvironment, tools
 import os
 
-class GmpConan(ConanFile):
-    name = "Ffmpeg"
-    version = "2.8.3"
+class FFmpegConan(ConanFile):
+    name = "FFmpeg"
+    version = "3.3"
+    description = "Conan recipe for FFMpeg"
     settings = "os", "compiler", "build_type", "arch"
-    FOLDER_NAME = "ffmpeg-2.8.3"
+    url = "https://github.com/piponazo/conan-ffmpeg"
+    license = "LGPL v2.1+"
+    #exports = ["patches/*.patch"]
+    exports = ['FindFFmpeg.cmake']
 
     def source(self):
-        zip_name = "%s.tar.bz2" % self.FOLDER_NAME
-        url = "http://ffmpeg.org/releases/ffmpeg-%s.tar.bz2" % (self.version)
-        self.output.info("Downloading %s..." % url)
-        tools.download(url, zip_name)
-        tools.unzip(zip_name, ".")
-        os.remove(zip_name)
+        self.run("git clone --depth 1 --branch n%s https://github.com/FFmpeg/FFmpeg" % self.version)
 
     def build(self):
-        env = ConfigureEnvironment(self.deps_cpp_info, self.settings)
-        installFolder = "%s/installFolder" % os.getcwd()
+        env = AutoToolsBuildEnvironment(self)
 
         n_cores = tools.cpu_count()
-        self.run("mkdir %s" % installFolder)
-        self.run("cd %s && ./configure \
-                 --enable-pic \
-                 --enable-shared \
-                 --disable-static \
-                 --disable-symver \
-                 --disable-ffplay \
-                 --disable-ffprobe \
-                 --enable-pthreads \
-                 --disable-devices \
-                 --disable-avdevice \
-                 --disable-nonfree \
-                 --disable-gpl \
-                 --disable-doc \
-                 --enable-avresample \
-                 --enable-demuxer=rtsp \
-                 --enable-muxer=rtsp \
-                 --disable-bzlib \
-                 --prefix=%s" % (self.FOLDER_NAME, installFolder))
 
-        self.run("cd %s && %s make -j%s" % (self.FOLDER_NAME, env.command_line, n_cores))
-        self.run("cd %s && make install" % self.FOLDER_NAME)
+        with tools.environment_append(env.vars):
+            self.run("cd %s && ./configure \
+                     --enable-pic \
+                     --enable-shared \
+                     --disable-static \
+                     --disable-symver \
+                     --disable-ffplay \
+                     --disable-ffprobe \
+                     --enable-pthreads \
+                     --disable-devices \
+                     --disable-avdevice \
+                     --disable-nonfree \
+                     --disable-gpl \
+                     --disable-doc \
+                     --enable-avresample \
+                     --enable-demuxer=rtsp \
+                     --enable-muxer=rtsp \
+                     --disable-bzlib \
+                     --disable-programs \
+                     --disable-swresample \
+                     --prefix=%s" % (self.name, self.package_folder))
+
+            #if tools.os_info.is_linux:
+            #    tools.patch(base_path=sourceFolder, patch_file='patches/config_linux.patch', strip=1)
+
+            self.run("cd %s && make -j%s" % (self.name, n_cores))
+            self.run("cd %s && make install" % self.name)
 
     def package(self):
+        self.copy('FindFFmpeg.cmake', '.', '.')
         self.copy("*.h",  dst="include", src="installFolder/include")
         self.copy("*.so", dst="lib",     src="installFolder/lib")
 
     def package_info(self):
-        self.cpp_info.includedirs = ['include']  # Ordered list of include paths
-        self.cpp_info.libs = ['avcodec', 'avformat', 'avfilter', 'avutil', 'swscale']
-        self.cpp_info.libdirs = ['lib']  # Directories where libraries can be found
-        self.cpp_info.resdirs = ['res']  # Directories where resources, data, etc can be found
+        self.cpp_info.includedirs = ["include"]  # Ordered list of include paths
+        self.cpp_info.libs = ["avcodec", "avformat", "avfilter", "avutil", "swscale"]
+        self.cpp_info.libdirs = ["lib"]  # Directories where libraries can be found
