@@ -1,0 +1,2 @@
+This should help to compile the libraries on windows:
+https://pracucci.com/compile-ffmpeg-on-windows-with-visual-studio-compiler.html
