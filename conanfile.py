@@ -18,6 +18,8 @@ class FFmpegConan(ConanFile):
         env = AutoToolsBuildEnvironment(self)
 
         n_cores = tools.cpu_count()
+        CC = os.getenv('CC')
+        CXX = os.getenv('CXX')
 
         with tools.environment_append(env.vars):
             self.run("cd %s && ./configure \
@@ -39,10 +41,9 @@ class FFmpegConan(ConanFile):
                      --disable-bzlib \
                      --disable-programs \
                      --disable-swresample \
-                     --prefix=%s" % (self.name, self.package_folder))
-
-            #if tools.os_info.is_linux:
-            #    tools.patch(base_path=sourceFolder, patch_file='patches/config_linux.patch', strip=1)
+                     --cc=%s \
+                     --cxx=%s \
+                     --prefix=%s" % (self.name, CC, CXX, self.package_folder))
 
             self.run("cd %s && make -j%s" % (self.name, n_cores))
             self.run("cd %s && make install" % self.name)
