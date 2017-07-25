@@ -1,2 +1,28 @@
 This should help to compile the libraries on windows:
 https://pracucci.com/compile-ffmpeg-on-windows-with-visual-studio-compiler.html
+
+According to @tobiashieta (conan-slack) when you compile FFmpeg with MSVC you cannot get
+optimizations in ASM, etc. It is better to cross-compile.
+
+https://trac.ffmpeg.org/wiki/CompilationGuide/CrossCompilingForWindows
+http://conanio.readthedocs.io/en/latest/howtos/cross_building.html?highlight=cross
+
+$ ./configure --arch=x86 --target-os=mingw32 --cross-prefix=i686-w64-mingw32- --pkg-config=pkg-config
+--arch= x86 x86_32 x86_64
+--target-os= mingw32*|mingw64*|win32|win64|cygwin*|*-dos|freedos|opendos|os/2*|symbian)
+--enable-cross-compile
+
+It seems to compile everything correctly but it fails in the installation phase:
+INSTALL	libavfilter/avfilter.dll
+install: cannot stat 'libavfilter/avfilter.lib': No such file or directory
+library.mak:93: recipe for target 'install-libavfilter-shared' failed
+
+
+The files generated are have .a extension instead of .lib :
+luis@xubuntu-desktop:~/.conan/data/FFmpeg/3.3/piponazo/test/build/bbc0af45c2feab88f9c355e41f55f6f6cfa0e706/FFmpeg((no branch)) $ find -name *.a
+./libavfilter/libavfilter.dll.a
+./libavformat/libavformat.dll.a
+./libavcodec/libavcodec.dll.a
+./libavresample/libavresample.dll.a
+./libavutil/libavutil.dll.a
+./libswscale/libswscale.dll.a
