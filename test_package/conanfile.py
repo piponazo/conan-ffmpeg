@@ -14,9 +14,9 @@ class GmpReuseConan(ConanFile):
         self.copy('*.so*', src='lib', dst='bin')
 
     def build(self):
-        cmake = CMake(self.settings)
-        self.run('cmake "%s" %s' % (self.conanfile_directory, cmake.command_line))
-        self.run("cmake --build . %s" % cmake.build_config)
+        cmake = CMake(self)
+        cmake.configure(source_dir=self.conanfile_directory)
+        cmake.build()
 
     def test(self):
         # equal to ./bin/greet, but portable win: .\bin\greet
