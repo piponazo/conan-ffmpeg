@@ -1,5 +1,4 @@
 from conans import ConanFile, AutoToolsBuildEnvironment, tools
-import os
 
 class FFmpegConan(ConanFile):
     name = "FFmpeg"
@@ -8,7 +7,6 @@ class FFmpegConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     url = "https://github.com/piponazo/conan-ffmpeg"
     license = "LGPL v2.1+"
-    #exports = ["patches/*.patch"]
     exports = ['FindFFmpeg.cmake']
 
     def source(self):
