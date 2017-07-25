@@ -13,45 +13,39 @@ class FFmpegConan(ConanFile):
         self.run("git clone --depth 1 --branch n%s https://github.com/FFmpeg/FFmpeg" % self.version)
 
     def build(self):
-        env = AutoToolsBuildEnvironment(self)
+        env_build = AutoToolsBuildEnvironment(self)
+        env_args = ['--enable-pic',
+                    '--enable-shared',
+                    '--disable-static',
+                    '--disable-symver',
+                    '--disable-ffplay',
+                    '--disable-ffprobe',
+                    '--disable-devices',
+                    '--disable-avdevice',
+                    '--disable-nonfree',
+                    '--disable-gpl',
+                    '--disable-doc',
+                    '--enable-avresample',
+                    '--enable-demuxer=rtsp',
+                    '--enable-muxer=rtsp',
+                    '--disable-bzlib',
+                    '--disable-programs',
+                    '--disable-swresample',
+                    '--prefix=%s' % self.package_folder,
+                   ]
 
-        n_cores = tools.cpu_count()
-        CC = os.getenv('CC')
-        CXX = os.getenv('CXX')
+        #if self.settings.os == "Windows":
+        #        #CC = os.getenv('CC')
+        #        #CXX = os.getenv('CXX')
+        #         #--cc=%s \
+        #         #--cxx=%s \
+        #    configure_command += " --arch=x86 --target-os=mingw32 --enable-cross-compile"
 
-        with tools.environment_append(env.vars):
-            configure_command = "./configure \
-                     --enable-pic \
-                     --enable-shared \
-                     --disable-static \
-                     --disable-symver \
-                     --disable-ffplay \
-                     --disable-ffprobe \
-                     --disable-devices \
-                     --disable-avdevice \
-                     --disable-nonfree \
-                     --disable-gpl \
-                     --disable-doc \
-                     --enable-avresample \
-                     --enable-demuxer=rtsp \
-                     --enable-muxer=rtsp \
-                     --disable-bzlib \
-                     --disable-programs \
-                     --disable-swresample \
-                     --cc=%s \
-                     --cxx=%s \
-                     --prefix=%s" % (CC, CXX, self.package_folder)
+        env_build.configure(configure_dir = self.name, args=env_args)
+        env_build.make(args = ['-j%s' % tools.cpu_count()] )
 
-            if self.settings.os == "Windows":
-                configure_command += " --arch=x86 --target-os=mingw32 --enable-cross-compile"
-            else:
-                configure_command += " --enable-pthreads"
-
-            self.run("cd %s && %s" % (self.name, configure_command))
-            self.run("cd %s && make -j%s" % (self.name, n_cores))
-
-            if not tools.os_info.is_windows:
-                self.run("cd %s && make install" % self.name)
+        if not tools.os_info.is_windows:
+            env_build.make(args = ['install'] )
 
     def package(self):
         if tools.os_info.is_windows:
